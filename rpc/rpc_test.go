@@ -3,7 +3,6 @@ package rpc
 // import (
 // 	"os"
 // 	"testing"
-// 	"tstorage"
 // )
 
 // func Test_RPCInsertRows(t *testing.T) {
@@ -13,11 +12,12 @@ package rpc
 // 	}
 // 	defer os.RemoveAll(tmpDir)
 
-// 	jrpc, err := NewJSONRPC(3000, tstorage.WithDataPath(tmpDir))
+// 	opts := DefaultOptions()
+// 	opts.dataPath = tmpDir
 
+// 	jrpc, err := NewJSONRPC(opts)
 // 	if err != nil {
 // 		panic(err)
 // 	}
-
 // 	jrpc.Main()
 // }

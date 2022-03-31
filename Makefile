@@ -15,3 +15,6 @@ dep:
 
 godoc:
 	godoc -http=:6060
+
+install:
+	go install ./ts-rpc

@@ -1,27 +1,32 @@
 package rpc
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/rpc"
 	"github.com/gorilla/rpc/json"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"log"
 	"tstorage"
 )
 
 type JSONRPC struct {
-	port    int
+	opts    *Options
 	storage tstorage.Storage
 }
 
-func NewJSONRPC(port int, opts ...tstorage.Option) (*JSONRPC, error) {
-	storage, err := tstorage.NewStorage(opts...)
+func NewJSONRPC(opts *Options) (*JSONRPC, error) {
+	storage, err := tstorage.NewStorage(tstorage.WithDataPath(opts.dataPath),
+		tstorage.WithPartitionDuration(opts.partitionDuration),
+		tstorage.WithRetention(opts.retention),
+		tstorage.WithTimestampPrecision(tstorage.TimestampPrecision(opts.timestampPrecision)),
+		tstorage.WithWALBufferedSize(opts.walBufferSize),
+	)
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("Starting on %s", opts.address)
 	go func() {
 		sigchan := make(chan os.Signal, 1)
 		signal.Notify(sigchan, os.Interrupt)
@@ -30,25 +35,24 @@ func NewJSONRPC(port int, opts ...tstorage.Option) (*JSONRPC, error) {
 		storage.Close()
 		os.Exit(0)
 	}()
-	return &JSONRPC{port: port, storage: storage}, nil
+	return &JSONRPC{opts: opts, storage: storage}, nil
 }
 
 func (jrpc *JSONRPC) Main() error {
-	p := ":" + fmt.Sprint(jrpc.port)
 	s := rpc.NewServer()
 	s.RegisterCodec(json.NewCodec(), "application/json")
 	s.RegisterService(jrpc, "ts")
 
 	r := mux.NewRouter()
 	r.Handle("/", s)
-	return http.ListenAndServe(p, r)
+	return http.ListenAndServe(jrpc.opts.address, r)
 }
 
 type SelectArgs struct {
-	Metric string  `json:"metric"`
+	Metric string      `json:"metric"`
 	Labels []jsonLabel `json:"labels,omitempty"`
-	Start  int64   `json:"start"`
-	End    int64   `json:"end"`
+	Start  int64       `json:"start"`
+	End    int64       `json:"end"`
 }
 
 type SelectRes []jsonPoint
