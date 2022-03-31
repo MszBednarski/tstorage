@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/nakabonne/tstorage/internal/syscall"
+	"tstorage/internal/syscall"
 )
 
 const (
