@@ -10,6 +10,7 @@
 *.out
 /coverage.txt
 /pprof
+data
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
